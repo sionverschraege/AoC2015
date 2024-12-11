@@ -9,9 +9,23 @@ def getInput(filename):
         lines[i] = lines[i].removesuffix('\n')
     return lines
 
+def nice(s):
+    pairs = []
+    hasPair = False
+    last = ['','']
+    hasTrip = False
+    for c in s:
+        newPair = last[-1] + c
+        if newPair in pairs[:-1]:
+            hasPair = True
+        pairs.append(newPair)
+        if c == last[-2]:
+            hasTrip = True
+        last = [last[-1], c]
+    return hasPair and hasTrip
+
 def solve(lines):
-    # Code goes here
-    return 'Not solved yet'
+    return sum([nice(l) for l in lines])
 
 for type in ["test","real"]:
     input = getInput(f'{type}input.txt')

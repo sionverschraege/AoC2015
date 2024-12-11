@@ -9,9 +9,25 @@ def getInput(filename):
         lines[i] = lines[i].removesuffix('\n')
     return lines
 
+vowels = 'aeiou'
+forbidden = ['ab','cd','pq','xy']
+def nice(s):
+    v = 0
+    d = False
+    last = ''
+    for c in s:
+        if c in vowels:
+            v += 1
+        elif last + c in forbidden:
+            return False
+        if last == c:
+            d = True
+        last = c
+    return d and v >= 3
+
+
 def solve(lines):
-    # Code goes here
-    return 'Not solved yet'
+    return sum([nice(l) for l in lines])
 
 for type in ["test","real"]:
     input = getInput(f'{type}input.txt')
