@@ -9,25 +9,51 @@ def getInput(filename):
         lines[i] = lines[i].removesuffix('\n')
     return lines
 
+split = ['2131','2132','2312','2313']
+#         21113
+#         231(13|23|33)
+#         213(21|11)
+
 def solve(lines):
-    l = [int(i) for i in lines[0]]
-    for _ in range(50):
-        nl = []
-        last = 0
-        count = 0
-        for c in l:
-            if c == last:
-                count += 1
-            else:
-                if last > 0:
-                    nl = nl + [count, last]
-                last = c
-                count = 1
-        nl = nl + [count, last]
-        last = c
-        count = 1
-        l = nl
-    return len(l)
+    parts = {lines[0]:1}
+    cache = {}
+    for i in range(50):
+        parts = solveParts(parts, cache)
+    return sum([parts[k] * len(k) for k in parts.keys()])
+
+def solveParts(parts, cache): 
+    newparts = {}
+    for k in parts.keys():
+        nps = []
+        if k in cache.keys():
+            nps = cache[k]
+        else:
+            nl = ''
+            last = ''
+            count = 0
+            for c in k:
+                if c == last:
+                    count += 1
+                else:
+                    if last != '':
+                        nl = nl + str(count) + str(last)
+                    last = c
+                    count = 1
+            nl = nl + str(count) + str(last)
+            nps = []
+            nnl = ''
+            for c in nl:
+                nnl += c
+                if nnl[-4:] in split:
+                    nps.append(nnl[:-3])
+                    nnl = nnl[-3:]
+            nps.append(nnl)
+            cache[k] = nps
+        for np in nps:
+            if np not in newparts.keys():
+                newparts[np] = 0
+            newparts[np] += parts[k]
+    return newparts
 
 for type in ["test","real"]:
     input = getInput(f'{type}input.txt')
