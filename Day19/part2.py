@@ -1,5 +1,6 @@
 import time
 from pathlib import Path
+import heapq
 
 def getInput(filename):
     path = Path(__file__)
@@ -23,62 +24,38 @@ def toMolecule(s: str) -> str:
 def solve(lines):
     itoo = {}
     otoi = {}
+    maxDiff = 0
     for line in lines[:-2]:
         i,_,o = line.split()
-        i,o = (toMolecule(i),toMolecule(o)) 
         if i not in itoo.keys():
             itoo[i] = []
         itoo[i].append(o)
         if o not in otoi.keys():
             otoi[o] = []
         otoi[o].append(i)
-    notJustAtStart = set()
-    maybeJustAtStart = set()
-    for key in otoi.keys():
-        atom = key.split('-')[0]
-        if atom not in notJustAtStart:
-            maybeJustAtStart.add(atom)
-        for atom in key.split('-')[1:]:
-            notJustAtStart.add(atom)
-            maybeJustAtStart.discard(atom)
-    for key in itoo.keys():
-        atom = key.split('-')[0]
-        if atom not in notJustAtStart:
-            maybeJustAtStart.add(atom)
-    changed = True
-    while changed:
-        changed = False
-        toSwitch = set()
-        for n in notJustAtStart:
-            if n in itoo.keys():
-                for tg in itoo[n]:
-                    toSwitch.add(tg.split('-')[0])
-        if maybeJustAtStart.intersection(toSwitch):
-            changed = True
-            notJustAtStart = notJustAtStart.union(toSwitch)
-            maybeJustAtStart = maybeJustAtStart.difference(toSwitch)
-    
-    justAtStart = maybeJustAtStart
+        maxDiff = max(maxDiff, len(o) - len(i))
+    # estimate, estRemaining, done, str
+    est = estimate(lines[-1], maxDiff)
+    states = [(est, est, 0, lines[-1])]
+    result = 0
+    checked = {lines[-1]}
+    while result == 0 and states:
+        _, _, done, str = heapq.heappop(states)
+        for i in range(len(str)):
+            for di in range(1,10):
+                if str[i:i+di] in otoi.keys():
+                    for sub in otoi[str[i:i+di]]:
+                        new = str[:i] + sub + str[i+di:]
+                        if new == 'e':
+                            result = done + 1
+                        elif 'e' not in new and new not in checked:
+                            est = estimate(new, maxDiff)
+                            heapq.heappush(states, (est + 1 + done, est, 1 + done, new))
+                            checked.add(new)
+    return result
 
-    options = {toMolecule(lines[-1])}
-    steps = 0
-    while 'e' not in options:
-        steps += 1
-        nopts = set()
-        for o in options:
-            for i in range(len(o)):
-                for di in range(15):
-                    if o[i:i+di] in otoi.keys():
-                        for tg in otoi[o[i:i+di]]:
-                            if i == 0 or tg.split('-')[0] not in justAtStart:
-                                nopt = o[:i] + tg + o[i+di:]
-                                if nopt == 'e' or nopt[0] != 'e':
-                                    nopts.add(nopt)
-        options = nopts
-    return steps
-    # lastStep = (lines[-1],0,None)
-    # while lastStep[0] != 'e':
-
+def estimate(str, maxDiff):
+    return (len(str) - 1) // maxDiff
 
 for type in ["test","real"]:
     input = getInput(f'{type}input.txt')
